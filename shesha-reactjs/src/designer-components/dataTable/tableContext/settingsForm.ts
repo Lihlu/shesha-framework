@@ -104,7 +104,6 @@ export const getSettings = (data: object): FormMarkupWithSettings => {
                       .addSettingsInputRow({
                         id: nanoid(),
                         parentId: dataTabId,
-                        inline: true,
                         hidden: {
                           _value: false,
                           _code: "return getSettingValue(data.sourceType) !== 'Entity';",
@@ -128,7 +127,6 @@ export const getSettings = (data: object): FormMarkupWithSettings => {
                       .addSettingsInputRow({
                         id: nanoid(),
                         parentId: dataTabId,
-                        inline: true,
                         hidden: {
                           _value: false,
                           _code:
@@ -313,7 +311,6 @@ export const getSettings = (data: object): FormMarkupWithSettings => {
                       .addSettingsInputRow({
                         id: nanoid(),
                         parentId: dataTabId,
-                        inline: true,
                         hidden: {
                           _value: false,
                           _code:
@@ -507,7 +504,6 @@ export const getSettings = (data: object): FormMarkupWithSettings => {
                       .addSettingsInputRow({
                         id: nanoid(),
                         parentId: dataTabId,
-                        inline: true,
                         hidden: {
                           _value: false,
                           _code: "return getSettingValue(data?.allowReordering) !== 'yes';",
@@ -541,7 +537,6 @@ export const getSettings = (data: object): FormMarkupWithSettings => {
                             id: nanoid(),
                             propertyName: 'onBeforeRowReorder',
                             label: 'On Before Row Reorder',
-                            hideLabel: true,
                             parentId: dataTabId,
                             type: 'configurableActionConfigurator',
                             description: 'Action to execute before row reorder. Can be used for validation and cancellation.',
