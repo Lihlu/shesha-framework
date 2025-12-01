@@ -21,6 +21,12 @@ const SliderComponent: SliderComponentDefinition = {
     const min = model?.min ? parseInt(model.min, 10) : undefined;
     const max = model?.max ? parseInt(model.max, 10) : undefined;
 
+    const baseStyle = (!model.enableStyleOnReadonly && model.readOnly)
+      ? {}
+      : getStyle(model?.style, formData);
+    const readOnlyStyle = model.readOnly ? { pointerEvents: 'none' } : {};
+    const sliderStyle = { ...baseStyle, ...readOnlyStyle };
+
     return (
       <div className={styles.sliderWrapper}>
         <ConfigurableFormItem model={model}>
@@ -31,9 +37,7 @@ const SliderComponent: SliderComponentDefinition = {
               max={max}
               onChange={onChange}
               value={value}
-              style={{ ...(!model.enableStyleOnReadonly && model.readOnly
-                ? {} : getStyle(model?.style, formData)), ...(model.readOnly
-                ? { pointerEvents: 'none' } : {}) }}
+              style={sliderStyle}
             />
           )}
         </ConfigurableFormItem>
