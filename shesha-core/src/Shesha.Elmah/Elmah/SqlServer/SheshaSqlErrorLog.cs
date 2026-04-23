@@ -68,6 +68,9 @@ namespace Shesha.Elmah.SqlServer
         {
             try
             {
+                if (SheshaElmahSettings.IsLoggingDisabled)
+                    return;
+
                 var errorXml = ErrorXml.EncodeString(error);
 
                 using (var connection = new SqlConnection(ConnectionString)) 
@@ -142,6 +145,9 @@ namespace Shesha.Elmah.SqlServer
 
         public override int GetErrors(int errorIndex, int pageSize, ICollection<ErrorLogEntry> errorEntryList)
         {
+            if (SheshaElmahSettings.IsFetchingDisabled)
+                return 0;
+
             if (errorIndex < 0) throw new ArgumentOutOfRangeException(nameof(errorIndex), errorIndex, null);
             if (pageSize < 0) throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, null);
 
