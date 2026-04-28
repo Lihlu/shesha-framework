@@ -87,6 +87,7 @@ export const ConfigurableFormItemLive: FC<IConfigurableFormItemProps> = ({
           componentId={model.id}
           formItemProps={formItemProps}
           valuePropName={valuePropName}
+          componentName={model.componentName}
           propertyName={propName}
           contextName={model.context}
         >

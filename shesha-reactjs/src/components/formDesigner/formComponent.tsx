@@ -17,9 +17,10 @@ import { toCamelCase } from '@/utils/string';
 import { useComponentApi } from '@/providers/componentApi/provider';
 import { deepMergeValues, removeUndefinedProps } from '@/utils/object';
 import { CommonComponentApi, IComponentStyle, InputComponentApi } from '../../componentsApi/componentApi';
-import apiCode from "../../componentsApi/componentApi.ts?raw";
 import { IBackgroundValue } from '@/designer-components/_settings/utils';
 import { useDeepCompareEffect } from '@/hooks/useDeepCompareEffect';
+
+import apiCode from "../../componentsApi/componentApi.ts?raw";
 
 export interface IFormComponentProps {
   componentModel: IConfigurableFormComponent;
