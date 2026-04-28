@@ -9,6 +9,7 @@ using GraphQL.Types;
 using GraphQLParser.AST;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
+using Npgsql;
 using Shesha.Configuration.Runtime;
 using Shesha.Configuration.Runtime.Exceptions;
 using Shesha.Domain;
@@ -16,6 +17,7 @@ using Shesha.Extensions;
 using Shesha.GraphQL.Dtos;
 using Shesha.GraphQL.Provider.GraphTypes;
 using Shesha.JsonLogic;
+using Shesha.NHibernate;
 using Shesha.QuickSearch;
 using Shesha.Reflection;
 using Shesha.Services;
@@ -25,6 +27,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Linq.Dynamic.Core;
+using System.Threading.Tasks;
 
 namespace Shesha.GraphQL.Provider.Queries
 {
@@ -35,6 +39,7 @@ namespace Shesha.GraphQL.Provider.Queries
     {
         private readonly IJsonLogic2LinqConverter _jsonLogicConverter;
         private readonly IEntityTypeConfigurationStore _entityConfigStore;
+        private readonly ISessionProvider _sessionProvider;
 
         public EntityQuery(IServiceProvider serviceProvider)
         {
@@ -44,6 +49,7 @@ namespace Shesha.GraphQL.Provider.Queries
 
             _jsonLogicConverter = serviceProvider.GetRequiredService<IJsonLogic2LinqConverter>();
             _entityConfigStore = serviceProvider.GetRequiredService<IEntityTypeConfigurationStore>();
+            _sessionProvider = serviceProvider.GetRequiredService<ISessionProvider>();
 
             var repository = serviceProvider.GetRequiredService<IRepository<TEntity, TId>>();
             var asyncExecuter = serviceProvider.GetRequiredService<IAsyncQueryableExecuter>();
@@ -103,6 +109,143 @@ namespace Shesha.GraphQL.Provider.Queries
 
                     return result;
                 });
+
+            Field<PagedResultDtoType<TEntity>>($"{entityName}Tree")
+                .Argument<GraphQLInputGenericType<TreeRequestDto>>("input").DefaultValue(new TreeRequestDto())
+                .ResolveAsync(async context => {
+                    var input = context.GetArgument<TreeRequestDto>("input");
+
+                    var unitOfWorkManager = serviceProvider.GetRequiredService<IUnitOfWorkManager>();
+                    var uow = unitOfWorkManager.Current;
+
+                    if (input.ParentId.HasValue)
+                    {
+                        var entityConfig = _entityConfigStore.Get(typeof(TEntity));
+                        var idColumnName = MappingHelper.GetColumnName(entityConfig.EntityType.GetRequiredProperty(nameof(IEntity.Id)));
+                        var isDeletedColumnName = typeof(ISoftDelete).IsAssignableFrom(entityConfig.EntityType)
+                            ? MappingHelper.GetColumnName(entityConfig.EntityType.GetRequiredProperty(nameof(ISoftDelete.IsDeleted)))
+                            : null;
+
+                        var treeEntities = await GetTreeQueryAsync(entityConfig.TableName, input.ParentColumn, idColumnName, isDeletedColumnName, input.ParentId);
+
+                        // filter entities
+                        var entities = !string.IsNullOrWhiteSpace(input.Filter)
+                            ? AddFilter(treeEntities.AsQueryable(), input.Filter).ToList()
+                            : treeEntities.ToList();
+
+                        var result = new PagedResultDto<TEntity>
+                        {
+                            Items = entities,
+                            TotalCount = entities.Count,
+                        };
+
+                        return result;
+                    }
+                    else {
+                        var query = await repository.GetAllAsync();
+                        query.SetReadOnly();
+
+                        // filter entities
+                        query = AddFilter(query, input.Filter);
+
+                        var entities = entityFetcher != null
+                            ? await entityFetcher.ToListAsync(query, GetEntityPropertiesFromContext(context))
+                            : await asyncExecuter.ToListAsync(query);
+
+                        var result = new PagedResultDto<TEntity>
+                        {
+                            Items = entities,
+                            TotalCount = entities.Count,
+                        };
+
+                        return result;
+
+                    }
+                });
+        }
+
+        private DbmsType GetDbmsType()
+        {
+            return _sessionProvider.Session.Connection is NpgsqlConnection
+                ? DbmsType.PostgreSQL
+                : DbmsType.SQLServer;
+        }
+
+        private async Task<IList<TEntity>> GetTreeQueryAsync(string tableName, string parentIdColumnName, string idColumnName, string? isDeletedColumnName, Guid? parentId)
+        {
+            var sql = GenerateTreeSubnodesQuery(tableName, parentIdColumnName, idColumnName, isDeletedColumnName, GetDbmsType());
+
+            var entities = await _sessionProvider.Session.CreateSQLQuery(sql)
+                     .AddEntity("ent", typeof(TEntity))
+                     .SetParameter("id", parentId)
+                     .SetReadOnly(true)
+                     .ListAsync<TEntity>();
+            return entities;
+        }
+
+        private string GetIsDeletedClause(string tableAlias, string? columnName, DbmsType dbmsType)
+        {
+            if (string.IsNullOrEmpty(columnName))
+                return string.Empty;
+
+            return dbmsType switch
+            {
+                DbmsType.SQLServer => $"and {tableAlias}.\"{columnName}\" = 0",
+                DbmsType.PostgreSQL => $"and {tableAlias}.\"{columnName}\" = false",
+                _ => throw new NotSupportedException($"Database type {dbmsType} is not supported"),
+            };
+        }
+
+        private string GenerateTreeSubnodesQuery(string tableName, string parentIdColumnName, string idColumnName, string? isDeletedColumnName, DbmsType dbmsType)
+        {
+            tableName = tableName.Trim('"');
+
+            var sql = @$"WITH {(dbmsType == DbmsType.PostgreSQL ? "recursive" : "")} x AS (
+	SELECT 
+		""{idColumnName}"" as id, 
+		""{parentIdColumnName}"" as parent_id, 
+		1 as level
+	FROM 
+		""{tableName}"" u
+	WHERE 
+		u.""ParentId"" IS NULL
+		{GetIsDeletedClause("u", isDeletedColumnName, dbmsType)}
+	UNION ALL
+	-- recursive
+	SELECT 
+		u.""{idColumnName}"" as id, 
+		u.""{parentIdColumnName}"" as parent_id, 
+		x.level + 1 as level
+	FROM 
+		x 
+		INNER JOIN ""{tableName}"" u
+	ON u.""ParentId"" = x.id {GetIsDeletedClause("u", isDeletedColumnName, dbmsType)}
+), x2 as (
+	SELECT 
+		id,
+		id as ancestor_id, 
+		level
+    FROM 
+		x
+	UNION ALL
+	-- recursive
+	select 
+		u.id, 
+		x2.ancestor_id, 
+		x2.level
+	from 
+		x2
+		join x u on u.parent_id = x2.id
+)
+select 
+	ent.*
+from
+    ""{tableName}"" ent
+    inner join x2 on x2.id = ent.""{idColumnName}""
+where
+	x2.ancestor_id = :id
+";
+            return sql;
         }
 
         private List<string> GetEntityPropertiesFromContext(IResolveFieldContext context) 
