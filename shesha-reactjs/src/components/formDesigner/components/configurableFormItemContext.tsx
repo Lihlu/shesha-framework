@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useEffect, useCallback } from "react";
 import { Form, FormItemProps } from "antd";
 import { IConfigurableFormItemChildFunc } from "./model";
 import { DataBinder } from "@/hocs/dataBinder";
@@ -19,33 +19,30 @@ interface IConfigurableFormItem_ContextProps {
 }
 
 export const ConfigurableFormItemContext: FC<IConfigurableFormItem_ContextProps> = (props) => {
-  const {
-    formItemProps,
-    valuePropName,
-    componentName,
-    propertyName,
-    contextName,
-    children,
-  } = props;
+  const { componentId, formItemProps, valuePropName, componentName, propertyName, contextName, children } = props;
   const componentApi = useComponentApi();
   const { getDataContext } = useDataContextManager();
   const { getFieldValue, setFieldValue } = getDataContext(contextName) ?? {};
 
   const value = getFieldValue?.(propertyName);
 
-  const onChange = (val: any): void => {
-    const value = val?.target ? val?.target[valuePropName || 'value'] : val;
-    setFieldValue?.(propertyName as "", value as never); // TODO: review and change types
-  };
+  const onChange = useCallback((val: any): void => {
+    const newValue = val?.target ? val?.target[valuePropName || 'value'] : val;
+    setFieldValue?.(propertyName as "", newValue as never);
+  }, [valuePropName, setFieldValue, propertyName]);
 
-  // ToDo: AS - wrap useEffect ??? check and optimize
-  componentApi.updateApi<InputComponentApi>(
-    {
-      componentName: componentName,
-      typeDefinition: { typeName: 'InputComponentApi', files: [{ content: apiCode, fileName: 'apis/componentApi.ts' }] },
-    },
-    [{ name: 'value', getter: () => getFieldValue?.(propertyName), setter: (val) => onChange(val) }],
-  );
+  useEffect(() => {
+    if (componentApi === undefined) return undefined;
+    componentApi.updateApi<InputComponentApi>(
+      {
+        id: componentId,
+        componentName: componentName,
+        typeDefinition: { typeName: 'InputComponentApi', files: [{ content: apiCode, fileName: 'apis/componentApi.ts' }] },
+      },
+      [{ name: 'value', getter: () => getFieldValue?.(propertyName), setter: onChange }],
+    );
+    return () => componentApi.removeApi(componentId);
+  }, [componentApi, componentId, componentName, getFieldValue, propertyName, onChange]);
 
   return (
     <Form.Item {...formItemProps}>

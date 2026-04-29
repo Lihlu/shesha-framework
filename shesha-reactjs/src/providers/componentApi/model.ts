@@ -15,6 +15,7 @@ export type ComponentApiProperty<T extends object = object> = {
 export type CreateApiPropertyFunc = <T extends object = Record<string, unknown>>(data: T, property: ComponentApiProperty<T>) => void;
 
 export interface IComponentApiDescription<T extends object = Record<string, unknown>> {
+  id: string;
   componentName: string;
   rawComponentModel?: IConfigurableFormComponent | undefined;
   componentModel?: IConfigurableFormComponent | undefined;
@@ -25,6 +26,7 @@ export interface IComponentApiDescription<T extends object = Record<string, unkn
 
 export interface IComponentApiActions {
   updateApi: <T extends object = Record<string, unknown>>(api: IComponentApiDescription<T>, properties?: ComponentApiProperty<T>[]) => void;
+  removeApi: (id: string) => void;
   getApi: <PT extends Record<string, unknown>>(componentName: string) => IComponentApiDescription<PT> | undefined;
   getComponents: () => IComponentApiDescription[];
   createApiProperty: CreateApiPropertyFunc;

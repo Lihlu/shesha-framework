@@ -137,9 +137,12 @@ const FormComponentInner: FC<IFormComponentProps> = ({ componentModel: sourceCom
   const actualApiModel = useDeepCompareMemo(() => deepMergeValues(actualModel, apiModel), [actualModel, apiModel]);
 
   useDeepCompareEffect(() => {
+    if (componentApi === undefined) return undefined;
+
     // common Api
     componentApi.updateApi<CommonComponentApi>(
       {
+        id: actualModel.id,
         componentName: actualModel.componentName,
         componentModel: actualModel,
         rawComponentModel: sourceComponentModel,
@@ -172,9 +175,10 @@ const FormComponentInner: FC<IFormComponentProps> = ({ componentModel: sourceCom
     );
 
     // input common Api
-    if (toolboxComponent?.isInput)
+    if (toolboxComponent?.isInput) {
       componentApi.updateApi<InputComponentApi>(
         {
+          id: actualModel.id,
           componentName: actualModel.componentName,
           api: {
             isValid: () => actualModel.propertyName
@@ -203,6 +207,8 @@ const FormComponentInner: FC<IFormComponentProps> = ({ componentModel: sourceCom
           } },
         ],
       );
+    }
+    return () => componentApi.removeApi(actualModel.id);
   }, [toolboxComponent, actualApiModel, componentApi, shaForm.antdForm, setApiModel, setApiStyles, sourceComponentModel, updateApiModel]);
 
   const control = useMemo(() => {

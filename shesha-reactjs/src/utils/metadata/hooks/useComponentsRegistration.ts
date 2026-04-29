@@ -12,10 +12,11 @@ export const useComponentsRegistration = (): MetadataBuilderAction => {
     if (components?.length) {
       builder.addObject('components', "Components API", (builder) => {
         for (const component of components) {
-          if (!component.componentName) continue;
+          const componentName = component.componentName;
+          if (!componentName) continue;
           const meta = component.metadata;
           if (isDefined(meta) && (meta.properties?.length || meta.methods?.length || meta.typeDefinitionLoader)) {
-            builder.addObject(component.componentName, component.componentModel?.description, (builder) => {
+            builder.addObject(componentName, component.componentModel?.description, (builder) => {
               if (meta.typeDefinitionLoader)
                 builder.setTypeDefinition(meta.typeDefinitionLoader);
               if (isPropertiesArray(meta.properties))
@@ -25,11 +26,11 @@ export const useComponentsRegistration = (): MetadataBuilderAction => {
               return builder;
             });
           } else if (component.typeDefinition) {
-            builder.addCustom(component.componentName, component.componentModel?.description || `${component.componentModel?.type ?? component.componentName}Api`, () => {
+            builder.addCustom(componentName, component.componentModel?.description || `${component.componentModel?.type ?? component.componentName}Api`, () => {
               return Promise.resolve(component.typeDefinition as TypeDefinition);
             });
           } else {
-            builder.addObject(component.componentName, component.componentModel?.description, (builder) => {
+            builder.addObject(componentName, component.componentModel?.description, (builder) => {
               return builder.addAny('[key: string]', 'fields');
             });
           }
