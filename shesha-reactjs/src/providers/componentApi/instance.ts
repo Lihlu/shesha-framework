@@ -1,3 +1,4 @@
+import { toCamelCase } from "@/utils/string";
 import { IComponentApiActions, IComponentApiDescription, ComponentApiProperty } from "./model";
 
 export class ComponentApiInstance implements IComponentApiActions {
@@ -15,10 +16,11 @@ export class ComponentApiInstance implements IComponentApiActions {
 
   // ToDo: AS - review component naming rules, there are can be duplicates and incorrect names
   updateApi<T extends object = Record<string, unknown>>(api: IComponentApiDescription<T>, properties?: ComponentApiProperty<T>[]): void {
-    const localApi = (this.componentApis.get(api.componentName) ?? {}) as IComponentApiDescription<T>;
-    if (localApi.api === undefined) localApi.api = {} as T;
-    if (!localApi.componentName)
-      localApi.componentName = api.componentName;
+    const componentName = toCamelCase(api.componentName, { keepLeadingSeparators: false });
+    if (!componentName || !api.id) return;
+    const localApi = (this.componentApis.get(api.id) ?? { id: api.id }) as IComponentApiDescription<T>;
+    if (localApi.api === undefined) localApi.api = { } as T;
+    localApi.componentName = componentName;
     if (api.typeDefinition)
       localApi.typeDefinition = api.typeDefinition;
     if (api.componentModel)
@@ -35,11 +37,15 @@ export class ComponentApiInstance implements IComponentApiActions {
       }
     }
     properties?.forEach((property) => this.createApiProperty(localApi.api as T, { name: property.name, getter: property.getter, setter: property.setter }));
-    this.componentApis.set(api.componentName, localApi);
+    this.componentApis.set(api.id, localApi);
   };
 
-  getApi<PT extends Record<string, unknown>>(componentName: string): IComponentApiDescription<PT> | undefined {
-    return this.componentApis.get(componentName) as IComponentApiDescription<PT> | undefined;
+  removeApi(id: string): void {
+    this.componentApis.delete(id);
+  };
+
+  getApi<PT extends Record<string, unknown>>(componentNameOrId: string): IComponentApiDescription<PT> | undefined {
+    return (Array.from(this.componentApis.values()).find((x) => x.componentName === componentNameOrId) ?? this.componentApis.get(componentNameOrId)) as IComponentApiDescription<PT> | undefined;
   };
 
   getComponents(): IComponentApiDescription[] {
