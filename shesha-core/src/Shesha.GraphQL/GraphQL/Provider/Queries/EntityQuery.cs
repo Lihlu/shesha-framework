@@ -126,7 +126,17 @@ namespace Shesha.GraphQL.Provider.Queries
                             ? MappingHelper.GetColumnName(entityConfig.EntityType.GetRequiredProperty(nameof(ISoftDelete.IsDeleted)))
                             : null;
 
-                        var treeEntities = await GetTreeQueryAsync(entityConfig.TableName, input.ParentColumn, idColumnName, isDeletedColumnName, input.ParentId);
+                        var parentProperty = entityConfig.EntityType.GetPropertyWithPath(input.ParentProperty, true);
+                        if (parentProperty == null)
+                            throw new ArgumentException($"Property '{input.ParentProperty}' not found in entity '{entityConfig.EntityType.FullName}'");
+                        if (!parentProperty.PropertyInfo.PropertyType.IsEntityType())
+                            throw new ArgumentException($"Property '{input.ParentProperty}' of entity '{entityConfig.EntityType.FullName}' is not an entity");
+                        if (parentProperty.Path.Count > 1)
+                            throw new NotSupportedException($"Nested entities are not supported. Property '{input.ParentProperty}' is nested.");
+
+                        var parentPropertyColumnName = MappingHelper.GetForeignKeyColumn(parentProperty.PropertyInfo);
+
+                        var treeEntities = await GetTreeQueryAsync(entityConfig.TableName, parentPropertyColumnName, idColumnName, isDeletedColumnName, input.ParentId);
 
                         // filter entities
                         var entities = !string.IsNullOrWhiteSpace(input.Filter)
@@ -200,51 +210,33 @@ namespace Shesha.GraphQL.Provider.Queries
         {
             tableName = tableName.Trim('"');
 
-            var sql = @$"WITH {(dbmsType == DbmsType.PostgreSQL ? "recursive" : "")} x AS (
-	SELECT 
-		""{idColumnName}"" as id, 
-		""{parentIdColumnName}"" as parent_id, 
-		1 as level
-	FROM 
-		""{tableName}"" u
-	WHERE 
-		u.""ParentId"" IS NULL
-		{GetIsDeletedClause("u", isDeletedColumnName, dbmsType)}
-	UNION ALL
-	-- recursive
-	SELECT 
-		u.""{idColumnName}"" as id, 
-		u.""{parentIdColumnName}"" as parent_id, 
-		x.level + 1 as level
-	FROM 
-		x 
-		INNER JOIN ""{tableName}"" u
-	ON u.""ParentId"" = x.id {GetIsDeletedClause("u", isDeletedColumnName, dbmsType)}
-), x2 as (
-	SELECT 
-		id,
-		id as ancestor_id, 
-		level
+            var sql = @$"with {(dbmsType == DbmsType.PostgreSQL ? "recursive" : "")} subtree_cte as (
+    -- Anchor
+    SELECT 
+        t.""{idColumnName}"", 
+        t.""{parentIdColumnName}"", 
+        0 AS level
+    FROM ""{tableName}"" t
+    WHERE t.""{idColumnName}"" = :id
+
+    UNION ALL
+
+    -- Recursive
+    SELECT 
+        t.""{idColumnName}"",
+        t.""{parentIdColumnName}"",
+        cte.level + 1
     FROM 
-		x
-	UNION ALL
-	-- recursive
-	select 
-		u.id, 
-		x2.ancestor_id, 
-		x2.level
-	from 
-		x2
-		join x u on u.parent_id = x2.id
+		""{tableName}"" t
+		INNER JOIN subtree_cte cte ON t.""{parentIdColumnName}"" = cte.""{idColumnName}"" {GetIsDeletedClause("t", isDeletedColumnName, dbmsType)}
 )
 select 
 	ent.*
 from
     ""{tableName}"" ent
-    inner join x2 on x2.id = ent.""{idColumnName}""
-where
-	x2.ancestor_id = :id
+    inner join subtree_cte on subtree_cte.""{idColumnName}"" = ent.""{idColumnName}""
 ";
+
             return sql;
         }
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Shesha.GraphQL.Dtos
 {
@@ -16,7 +15,7 @@ namespace Shesha.GraphQL.Dtos
         /// <summary>
         /// Parent column
         /// </summary>
-        public string ParentColumn { get; set; }
+        public string ParentProperty { get; set; }
 
         /// <summary>
         /// Parent Id
