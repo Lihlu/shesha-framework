@@ -1,9 +1,8 @@
 
-import { Row } from 'react-table';
+import { Row, SortingRule } from 'react-table';
 import { IConfigurableColumnsProps } from '../datatableColumnsConfigurator/models';
 import {
   ColumnFilter,
-  IColumnSorting,
   IPublicDataTableActions,
   IStoredFilter,
   ITableFilter,
@@ -69,6 +68,7 @@ interface _DataActions {
 interface _SelectionActions {
   changeSelectedIds: (selectedIds: string[]) => void;
   setSelectedRow: (index: number, row: ITableRowData) => void;
+  clearSelectedRow: () => void;
   setMultiSelectedRow: (rows: Row<ITableRowData>[] | Row<ITableRowData>) => void;
 };
 
@@ -77,7 +77,7 @@ interface _ReorderActions {
 }
 
 interface _SortingActions {
-  onSort: (sorting: IColumnSorting[]) => void;
+  onSort: (sorting: SortingRule<ITableRowData>[]) => void;
 };
 interface _GroupingActions {
   onGroup?: (grouping: ISortingItem[]) => void;

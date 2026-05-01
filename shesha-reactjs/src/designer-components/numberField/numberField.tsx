@@ -7,7 +7,7 @@ import { IComponentValidationRules, IInputStyles, useMetadata } from '@/provider
 import { executeScriptSync, validateConfigurableComponentSettings } from '@/providers/form/utils';
 import { INumberFieldComponentProps, INumberFieldComponentPropsV1, NumberFieldComponentDefinition } from './interfaces';
 import { migratePropertyName, migrateCustomFunctions, migrateReadOnly, migrateHiddenToVisible } from '@/designer-components/_common-migrations/migrateSettings';
-import { getNumberFormat } from '@/utils/string';
+import { numberToFormattedString } from '@/utils/string';
 import { getDataProperty } from '@/utils/metadata';
 import { migrateVisibility } from '@/designer-components/_common-migrations/migrateVisibility';
 import { asPropertiesArray, IDecimalFormatting, INumberFormatting, isDecimalFormatting, isNumberFormatting } from '@/interfaces/metadata';
@@ -155,7 +155,7 @@ const NumberFieldComponent: NumberFieldComponentDefinition = {
             forceRefresh({});
           };
           return model.readOnly
-            ? <ReadOnlyDisplayFormItem type="number" value={getNumberFormat(value, getDataProperty(properties, model.propertyName, 'dataFormat'))} style={finalStyle} />
+            ? <ReadOnlyDisplayFormItem type="number" value={numberToFormattedString(value, getDataProperty(properties, model.propertyName, 'dataFormat'))} style={finalStyle} />
             : (
               <InputNumber
                 value={value}

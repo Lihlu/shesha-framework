@@ -4,9 +4,15 @@ export type ValueAccessor<TValue = unknown> = () => TValue;
 
 export interface ProxyWithRefresh<T> {
   refreshAccessors: (accessors: ProxyPropertiesAccessors<T>) => void;
-  addAccessor: (key: string, accessor: ValueAccessor<T>) => void;
+  addAccessor: <V = unknown>(key: string, accessor: ValueAccessor<V>) => void;
   setAdditionalData: (data: object) => void;
 };
+
+export const isProxyWithRefresh = <T = unknown>(obj: T): obj is T & ProxyWithRefresh<T> => isDefined(obj) &&
+  typeof (obj) === "object" &&
+  'refreshAccessors' in obj && typeof (obj.refreshAccessors) === 'function' &&
+  'addAccessor' in obj && typeof (obj.addAccessor) === 'function' &&
+  'setAdditionalData' in obj && typeof (obj.setAdditionalData) === 'function';
 
 export type ProxyPropertiesAccessors<Type> = {
   [Property in keyof Type]: ValueAccessor<Type[Property]>;

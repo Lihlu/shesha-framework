@@ -37,7 +37,7 @@ import { BackendRepositoryType } from '@/providers/dataTable/repository/backendR
 type TableWrapperProps = ITableComponentProps & { columnsMismatch?: boolean };
 
 export const TableWrapper: FC<TableWrapperProps> = (props) => {
-  const { id, items: configuredColumns, useMultiselect, selectionMode, tableStyle, containerStyle, columnsMismatch } = props;
+  const { id, items: configuredColumns, selectionMode, tableStyle, containerStyle, columnsMismatch } = props;
 
   const { formMode } = useForm();
   const { data: formData } = useFormData();
@@ -505,7 +505,6 @@ export const TableWrapper: FC<TableWrapperProps> = (props) => {
             onMultiRowSelect={setMultiSelectedRow}
             selectedRowIndex={selectedRow?.index}
             columnsMismatch={columnsMismatch}
-            useMultiselect={useMultiselect}
             selectionMode={selectionMode}
             freezeHeaders={props.freezeHeaders}
             allowReordering={allowReordering}

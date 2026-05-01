@@ -156,7 +156,7 @@ export function toCamelCase(str: string | null | undefined, options?: CamelCaseO
   return leadingSeparators + result;
 }
 
-export function getNumberFormat(str: string, format: string): string {
+export function numberToFormattedString(str: string, format: string | undefined): string {
   if (!isNullOrWhiteSpace(str)) {
     const value = parseFloat(str);
 
