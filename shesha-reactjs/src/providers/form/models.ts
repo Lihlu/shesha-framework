@@ -83,7 +83,7 @@ export interface IComponentValidationRules {
   validator?: string;
 }
 
-export type EditMode = 'editable' | 'readOnly' | 'inherited' | 'default' | boolean;
+export type EditMode = 'editable' | 'readOnly' | 'inherited' | boolean;
 export type PositionType = 'relative' | 'fixed';
 export interface IStyleType {
   border?: IBorderValue | undefined;
@@ -334,7 +334,7 @@ export type IObjectWithStringId = {
 export const isObjectWithStringId = (obj: unknown): obj is IObjectWithStringId => isDefined(obj) && typeof (obj) === "object" && "id" in obj && typeof (obj.id) === "string";
 
 export const isComponentsContainer = (obj: unknown): obj is IComponentsContainer =>
-  isDefined(obj) && "id" in obj && typeof (obj.id) === "string" && "components" in obj && Array.isArray(obj.components);
+  isDefined(obj) && typeof obj === "object" && "id" in obj && typeof (obj.id) === "string" && "components" in obj && Array.isArray(obj.components);
 
 export type IRawComponentsContainer = IFormComponentContainer & {
   components: IConfigurableFormComponent[];

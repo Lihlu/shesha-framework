@@ -191,8 +191,10 @@ const entitiesConfigurationToTypeDefinition = async (configurations: EntityConfi
           if (typeDef) {
             typesImporter.import(typeDef);
 
-            if (!isDefined(typeDef.metadata))
-              throw new Error(`Metadata is not defined for entity '${prop.entityModule}:${prop.entityType}'`);
+            if (!isDefined(typeDef.metadata)) {
+              console.error(`Metadata is not defined for entity '${prop.entityModule}:${prop.entityType}'`);
+              continue;
+            }
 
             const idType = getEntityIdJsType(typeDef.metadata) ?? UNKNOWN_TYPE;
             if (idType === UNKNOWN_TYPE)

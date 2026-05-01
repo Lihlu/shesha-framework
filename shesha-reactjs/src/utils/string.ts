@@ -147,13 +147,13 @@ export function toCamelCase(str: string | null | undefined, options?: CamelCaseO
     ? text.match(leadingSeparatorsRegex)?.[0] ?? ''
     : '';
 
-  const result = camelcase(text.replace(leadingSeparatorsRegex, ''), {
+  const result = camelcase(text, {
     locale: options?.locale ?? false,
     pascalCase: options?.pascalCase ?? false,
     preserveConsecutiveUppercase: options?.preserveConsecutiveUppercase ?? false,
-  });
+  }).replace(/[^\p{L}\p{N}]/gu, ''); // remove all non-alphanumeric characters
 
-  return leadingSeparators + result;
+  return leadingSeparators + result; // restore the leading separators if needed
 }
 
 export function numberToFormattedString(str: string, format: string | undefined): string {
