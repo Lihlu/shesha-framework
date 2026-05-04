@@ -14,6 +14,9 @@ interface ICreateOutcomeValueFuncArgs {
  * to `id` or `value` when the configured keyPropName isn't present on the row
  * (common for URL endpoints returning `{ id, ... }` while keyPropName defaults to `value`).
  */
+const isObjectRecord = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === 'object';
+
 export const createOutcomeValueFunc = ({
   providedFunc,
   dataSourceType,
@@ -23,19 +26,24 @@ export const createOutcomeValueFunc = ({
 }: ICreateOutcomeValueFuncArgs): OutcomeValueFunc => {
   const base: OutcomeValueFunc = providedFunc ??
     (dataSourceType === 'entitiesList' && !rawKeyPropName
-      ? (value: unknown) => ({
-        id: (value as Record<string, unknown>).id,
-        _displayName: getValueByPropertyName(value as Record<string, unknown>, displayPropName),
-        _className: (value as Record<string, unknown>)._className,
-      })
-      : (value: unknown) => getValueByPropertyName(value as Record<string, unknown>, keyPropName));
+      ? (value: unknown) => {
+        if (!isObjectRecord(value)) return value;
+        return {
+          id: value.id,
+          _displayName: getValueByPropertyName(value, displayPropName),
+          _className: value._className,
+        };
+      }
+      : (value: unknown) => {
+        if (!isObjectRecord(value)) return value;
+        return getValueByPropertyName(value, keyPropName);
+      });
 
   return (item: unknown, args: object) => {
     const result = base(item, args);
     if (result !== undefined && result !== null) return result;
-    if (item !== null && typeof item === 'object') {
-      const r = item as Record<string, unknown>;
-      return r.id ?? r.value ?? item;
+    if (isObjectRecord(item)) {
+      return item.id ?? item.value ?? item;
     }
     return item;
   };
