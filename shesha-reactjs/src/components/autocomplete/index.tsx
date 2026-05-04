@@ -55,7 +55,7 @@ const AutocompleteInner: FC<IAutocompleteBaseProps> = (props: IAutocompleteBaseP
     rawKeyPropName: props.keyPropName,
     displayPropName,
     keyPropName,
-  }), [props.outcomeValueFunc, props.dataSourceType, displayPropName, keyPropName]);
+  }), [props.outcomeValueFunc, props.dataSourceType, props.keyPropName, displayPropName, keyPropName]);
 
   // register columns
   useDeepCompareEffect(() => {
