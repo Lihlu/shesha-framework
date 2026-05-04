@@ -101,11 +101,14 @@ const AutocompleteComponent: AutocompleteComponentDefinition = {
       <ConfigurableFormItem {...{ model }}>
         {(value, onChange) => {
           const customEvent = customDropDownEventHandler(model, allData);
-          const isStructuredValue = (v: unknown): v is { id?: unknown; _displayName?: unknown; _className?: unknown } =>
+          type StructuredValue = { id?: unknown; _displayName?: unknown; _className?: unknown };
+          const isStructuredValue = (v: unknown): v is StructuredValue =>
             typeof v === 'object' && v !== null && !Array.isArray(v) &&
             ('id' in v || '_displayName' in v || '_className' in v);
+          const isStructuredValueOrArray = (v: unknown): v is StructuredValue | StructuredValue[] =>
+            isStructuredValue(v) || (Array.isArray(v) && v.every(isStructuredValue));
           const onChangeInternal = (value: unknown, option?: unknown): void => {
-            if (isStructuredValue(value))
+            if (isStructuredValueOrArray(value))
               customEvent.onChange(value, option);
             if (typeof onChange === 'function')
               onChange(value);
