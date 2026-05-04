@@ -213,7 +213,7 @@ const ConfigurableActionDispatcherProvider: FC<PropsWithChildren> = ({
     return action.useDynamicContextHook ?? EMPTY_DYNAMIC_CONTEXT_HOOK;
   };
 
-  const useActionDynamicContext = (actionConfiguration: IConfigurableActionConfiguration): GenericDictionary => {
+  const useActionDynamicContext = (actionConfiguration: IConfigurableActionConfiguration | undefined): GenericDictionary => {
     const useDynamicData = getDynamicContextHook(actionConfiguration);
 
     return useDynamicData();

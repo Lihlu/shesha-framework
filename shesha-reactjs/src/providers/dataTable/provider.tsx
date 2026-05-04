@@ -1,8 +1,9 @@
 import React, { FC, PropsWithChildren, useEffect } from "react";
-import { IDataTableProviderWithRepositoryProps } from "./provider-with-repo";
 import { useDatasetInstance, useDatasetState } from "./hooks";
 import { DataTableActionsContext, DataTableStateContext } from "./contexts";
 import { useConfigurableAction } from "../configurableActionsDispatcher";
+import { IDataTableProviderBaseProps } from "./provider.props";
+import { IHasModelType, IHasRepository } from "./repository/interfaces";
 
 const TempDataSetBridge: FC<PropsWithChildren> = ({ children }) => {
   const state = useDatasetState();
@@ -13,7 +14,9 @@ const TempDataSetBridge: FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-export const DataTableProviderWithRepositoryNew: FC<PropsWithChildren<IDataTableProviderWithRepositoryProps>> = (props) => {
+export interface IDataTableProviderWithRepositoryProps extends IDataTableProviderBaseProps, IHasRepository, IHasModelType { }
+
+export const DataTableProviderWithRepository: FC<PropsWithChildren<IDataTableProviderWithRepositoryProps>> = (props) => {
   const {
     children,
     repository,
