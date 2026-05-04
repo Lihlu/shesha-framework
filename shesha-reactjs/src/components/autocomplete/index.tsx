@@ -122,7 +122,7 @@ const AutocompleteInner: FC<IAutocompleteBaseProps> = (props: IAutocompleteBaseP
       if (keys.length) {
         const normalizedValue = Array.isArray(props.value) ? props.value[0] : props.value;
         const displayNameValue = normalizedValue != null && typeof normalizedValue === 'object'
-          ? (normalizedValue as Record<string, unknown>)['_displayName']
+          ? (normalizedValue as Record<string, unknown>)[displayPropName]
           : undefined;
         const hasDisplayName = displayNameValue !== undefined && displayNameValue !== null;
 
