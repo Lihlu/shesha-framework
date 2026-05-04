@@ -1,5 +1,5 @@
 import { NumberOutlined } from '@ant-design/icons';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfigurableFormItem } from '@/components/formDesigner/components/formItem';
 import ReadOnlyDisplayFormItem from '@/components/readOnlyDisplayFormItem';
 import { DataTypes, NumberFormats } from '@/interfaces/dataTypes';
@@ -7,7 +7,7 @@ import { IComponentValidationRules, IInputStyles, useMetadata } from '@/provider
 import { executeScriptSync, validateConfigurableComponentSettings } from '@/providers/form/utils';
 import { INumberFieldComponentProps, INumberFieldComponentPropsV1, NumberFieldComponentDefinition } from './interfaces';
 import { migratePropertyName, migrateCustomFunctions, migrateReadOnly, migrateHiddenToVisible } from '@/designer-components/_common-migrations/migrateSettings';
-import { getNumberFormat } from '@/utils/string';
+import { numberToFormattedString } from '@/utils/string';
 import { getDataProperty } from '@/utils/metadata';
 import { migrateVisibility } from '@/designer-components/_common-migrations/migrateVisibility';
 import { asPropertiesArray, IDecimalFormatting, INumberFormatting, isDecimalFormatting, isNumberFormatting } from '@/interfaces/metadata';
@@ -57,7 +57,18 @@ const NumberFieldComponent: NumberFieldComponentDefinition = {
 
     const componentApi = useComponentApi();
     const inputRef = useRef<InputNumberRef>();
-    const focus = (): void => inputRef.current?.focus();
+    useEffect(() => {
+      if (componentApi === undefined) return undefined;
+      componentApi.updateApi<NumberFieldApi>(
+        {
+          id: model.id,
+          componentName: model.componentName,
+          typeDefinition: { typeName: 'NumberFieldApi', files: [{ content: apiCode, fileName: 'apis/componentApi.ts' }] },
+          api: { focus: () => inputRef.current?.focus() },
+        },
+      );
+      return () => componentApi.removeApi(model.id);
+    }, [componentApi, model.componentName, model.id]);
 
     const { styles } = useStyles({
       fontFamily: model.font?.type,
@@ -172,18 +183,8 @@ const NumberFieldComponent: NumberFieldComponentDefinition = {
             forceRefresh({});
           };
 
-          // ToDo: AS - move to the useEffect or optimize
-          componentApi?.updateApi<NumberFieldApi>(
-            {
-              componentName: model.componentName,
-              typeDefinition: { typeName: 'NumberFieldApi', files: [{ content: apiCode, fileName: 'apis/componentApi.ts' }] },
-              api: { value, focus },
-            },
-            [{ name: 'value', getter: () => value, setter: (val) => onChangeInternal(val) }],
-          );
-
           return model.readOnly
-            ? <ReadOnlyDisplayFormItem type="number" value={getNumberFormat(value, getDataProperty(properties, model.propertyName, 'dataFormat'))} style={finalStyle} />
+            ? <ReadOnlyDisplayFormItem type="number" value={numberToFormattedString(value, getDataProperty(properties, model.propertyName, 'dataFormat'))} style={finalStyle} />
             : <InputNumber value={value} {...inputProps} style={model.allStyles.fullStyle} className={styles.numberField} onChange={onChangeInternal} ref={inputRef} />;
         }}
       </ConfigurableFormItem>

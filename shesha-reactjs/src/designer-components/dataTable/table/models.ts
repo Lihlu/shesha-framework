@@ -17,7 +17,6 @@ export type TableDeviceStyles = IInputStyles & {
 
 export interface ITableComponentBaseProps extends IShaDataTableInlineEditableProps, Omit<ICommonContainerProps, 'style'> {
   items: IConfigurableColumnsProps[];
-  useMultiselect?: boolean;
   selectionMode?: TableSelectionMode;
   freezeHeaders?: boolean;
   showExpandedView?: boolean;

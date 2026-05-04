@@ -17,9 +17,10 @@ import { toCamelCase } from '@/utils/string';
 import { useComponentApi } from '@/providers/componentApi/provider';
 import { deepMergeValues, removeUndefinedProps } from '@/utils/object';
 import { CommonComponentApi, IComponentStyle, InputComponentApi } from '../../componentsApi/componentApi';
-import apiCode from "../../componentsApi/componentApi.ts?raw";
 import { IBackgroundValue } from '@/designer-components/_settings/utils';
 import { useDeepCompareEffect } from '@/hooks/useDeepCompareEffect';
+
+import apiCode from "../../componentsApi/componentApi.ts?raw";
 
 export interface IFormComponentProps {
   componentModel: IConfigurableFormComponent;
@@ -136,9 +137,12 @@ const FormComponentInner: FC<IFormComponentProps> = ({ componentModel: sourceCom
   const actualApiModel = useDeepCompareMemo(() => deepMergeValues(actualModel, apiModel), [actualModel, apiModel]);
 
   useDeepCompareEffect(() => {
+    if (componentApi === undefined) return undefined;
+
     // common Api
     componentApi.updateApi<CommonComponentApi>(
       {
+        id: actualModel.id,
         componentName: actualModel.componentName,
         componentModel: actualModel,
         rawComponentModel: sourceComponentModel,
@@ -171,9 +175,10 @@ const FormComponentInner: FC<IFormComponentProps> = ({ componentModel: sourceCom
     );
 
     // input common Api
-    if (toolboxComponent?.isInput)
+    if (toolboxComponent?.isInput) {
       componentApi.updateApi<InputComponentApi>(
         {
+          id: actualModel.id,
           componentName: actualModel.componentName,
           api: {
             isValid: () => actualModel.propertyName
@@ -202,6 +207,8 @@ const FormComponentInner: FC<IFormComponentProps> = ({ componentModel: sourceCom
           } },
         ],
       );
+    }
+    return () => componentApi.removeApi(actualModel.id);
   }, [toolboxComponent, actualApiModel, componentApi, shaForm.antdForm, setApiModel, setApiStyles, sourceComponentModel, updateApiModel]);
 
   const control = useMemo(() => {

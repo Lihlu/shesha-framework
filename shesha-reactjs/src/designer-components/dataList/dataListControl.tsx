@@ -14,6 +14,7 @@ import { OnSaveHandler, OnSaveSuccessHandler } from '@/components/dataTable/inte
 import { useComponentValidation } from '@/providers/validationErrors';
 import { parseFetchError } from '@/designer-components/dataTable/utils';
 import { DataListPlaceholder } from './dataListPlaceholder';
+import { throwError } from '@/utils/errors';
 
 const DataListControl: FC<IDataListWithDataSourceProps> = (props) => {
   const {
@@ -61,7 +62,7 @@ const DataListControl: FC<IDataListWithDataSourceProps> = (props) => {
     isFetchingTableData: false,
     selectedIds: [],
     changeSelectedIds: () => { /* noop */ },
-    getRepository: () => null,
+    getRepository: () => throwError('Repository is not specified'),
     modelType: null,
     grouping: null,
     groupingColumns: [],

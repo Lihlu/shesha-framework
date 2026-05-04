@@ -236,3 +236,7 @@ export const getFirstNonEmptyStringPropertyOrUndefined = (obj: object, keys: str
   }
   return undefined;
 };
+
+export const getDisplayNameOrUndefined = (obj: unknown): string | undefined => typeof (obj) === "object" && isDefined(obj)
+  ? getStringPropertyOrUndefined(obj, "_displayName")
+  : undefined;

@@ -52,7 +52,9 @@ const strictFolders = isLightBuild
         "src/designer-components/_settings/utils/background",
         "src/form-factory",
         "src/publicJsApis",
-        "src/designer-components/_settings/utils/background",        
+        "src/designer-components/_settings/utils/background",
+
+        "src/components/dataTable"
     ];
 
 const stylisticOverrides = {

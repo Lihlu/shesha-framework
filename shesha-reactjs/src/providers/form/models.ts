@@ -190,10 +190,10 @@ export interface IComponentBindingProps {
   componentName?: string;
 
   /** property name */
-  propertyName?: string;
+  propertyName?: string | undefined;
 
   /** data context ID, empty for from data */
-  context?: string;
+  context?: string | undefined;
 
   /** initial data context ID, empty for from data */
   initialContext?: string;
