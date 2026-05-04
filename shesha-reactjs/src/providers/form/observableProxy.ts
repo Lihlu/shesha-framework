@@ -60,10 +60,13 @@ export class ObservableProxy<T> implements ProxyWithRefresh<T> {
         this.addAccessor(key, () => (data as Record<string, unknown>)[key]);
   };
 
+
   constructor(accessors: ProxyPropertiesAccessors<T>) {
     this._touchedProps = new Set<string>();
     this._propAccessors = new Map<string, ValueAccessor>();
     this.refreshAccessors(accessors);
+
+    const extraMethods = new Set(['refreshAccessors', 'addAccessor', 'setAdditionalData']);
 
     return new Proxy(this, {
       get(target, name) {
@@ -87,6 +90,7 @@ export class ObservableProxy<T> implements ProxyWithRefresh<T> {
         return undefined;
       },
       has(target, prop) {
+        if (extraMethods.has(prop as string)) return true;
         return target._propAccessors.has(prop.toString());
       },
       ownKeys(target) {
